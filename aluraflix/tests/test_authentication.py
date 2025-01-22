@@ -5,10 +5,9 @@ from django.urls import reverse
 from rest_framework import status
 
 class AuthenticationUserTestCase(APITestCase):
-
     def setUp(self):
-        self.list_url = reverse('programas-list')
-        self.user = User.objects.create_user('c3po', password='123456')
+        self.list_url = reverse('programas-list')  # Verifique se a rota está configurada
+        self.user = User.objects.create_user(username='c3po', password='123456')
 
     def test_autenticacao_user_com_credenciais_corretas(self):
         """Teste que verifica a autenticação de um user com as credenciais corretas"""
@@ -24,7 +23,7 @@ class AuthenticationUserTestCase(APITestCase):
         """Teste que verifica autenticação de um user com username incorreto"""
         user = authenticate(username='c3pp', password='123456')
         self.assertFalse((user is not None) and user.is_authenticated)
-    
+
     def test_autenticacao_de_user_com_password_incorreto(self):
         """Teste que verifica autenticação de um user com password incorreto"""
         user = authenticate(username='c3po', password='123455')
@@ -32,7 +31,12 @@ class AuthenticationUserTestCase(APITestCase):
 
     def test_requisicao_get_com_user_autenticado(self):
         """Teste que verifica uma requisição GET de um user autenticado"""
-        self.client.force_authenticate(self.user)
+        self.client.force_authenticate(user=self.user)
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_requisicao_get_com_token_invalido(self):
+        """Teste que verifica uma requisição GET com token inválido"""
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer invalid_token')
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
